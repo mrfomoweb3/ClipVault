@@ -17,7 +17,13 @@ settings:
   base:
     SWIFT_VERSION: 6.0
     MACOSX_DEPLOYMENT_TARGET: "14.0"
-    CODE_SIGN_STYLE: Automatic
+    # Stable self-signed identity so macOS keeps the Accessibility grant across
+    # rebuilds/updates (created by scripts/setup-signing.sh). Not Gatekeeper-
+    # trusted — that needs an Apple Developer ID — but TCC keys on this identity.
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "ClipVault Self-Signed"
+    DEVELOPMENT_TEAM: ""
+    PROVISIONING_PROFILE_SPECIFIER: ""
     ENABLE_HARDENED_RUNTIME: YES
     SWIFT_STRICT_CONCURRENCY: complete
     # Build a universal binary so the app runs natively on both
