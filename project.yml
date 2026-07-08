@@ -56,7 +56,7 @@ targets:
         ATSApplicationFontsPath: Fonts
         # --- Sparkle auto-updates ---
         # NOTE: replace YOUR_GITHUB_USERNAME below (see scripts/finalize-updates.sh).
-        SUFeedURL: "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/ClipVault/main/website/downloads/appcast.xml"
+        SUFeedURL: "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/ClipVault/main/appcast.xml"
         SUPublicEDKey: "JVjPnXAv24JwAwDVUHF1JkvIDg/XSK89ZH6LW1gQ+u4="
         SUEnableAutomaticChecks: true
         SUScheduledCheckInterval: 86400

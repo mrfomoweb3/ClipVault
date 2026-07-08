@@ -4,9 +4,9 @@
 #
 #   ./scripts/release.sh 1.0.1
 #
-# Bumps the version, builds a universal Release, packages a versioned .dmg,
-# and drops it into website/downloads (both a versioned copy and the stable
-# ClipVault-latest.dmg the site links to). Run from the repo root.
+# Bumps the version, builds a universal Release, packages + signs a .dmg,
+# publishes it as a GitHub Release asset, and writes the signed Sparkle
+# appcast (appcast.xml at the repo root). Run from the repo root.
 #
 set -euo pipefail
 
@@ -59,54 +59,66 @@ ARCHS="$(lipo -archs "$APP/Contents/MacOS/$SCHEME")"
 echo "▸ Built $APP  [$ARCHS]"
 
 # --- package dmg ------------------------------------------------------------
-echo "▸ Packaging ClipVault-$VERSION.dmg…"
-rm -rf build/dmg && mkdir -p build/dmg website/downloads
+# The GitHub Release asset is named ClipVault.dmg (constant) so the website's
+# "latest release" download URL is stable across versions.
+echo "▸ Packaging ClipVault.dmg…"
+rm -rf build/dmg && mkdir -p build/dmg
 cp -R "$APP" "build/dmg/$SCHEME.app"
 ln -s /Applications build/dmg/Applications
-DMG="build/ClipVault-$VERSION.dmg"
+DMG="build/ClipVault.dmg"
 rm -f "$DMG"
 hdiutil create -volname "ClipVault" -srcfolder build/dmg -ov -format UDZO "$DMG" >/dev/null
+cp "$DMG" "build/ClipVault-$VERSION.dmg"   # keep a versioned local copy too
 
-# Publish the versioned DMG into the site.
-cp "$DMG" "website/downloads/ClipVault-$VERSION.dmg"
-
-# --- sign the DMG + update the Sparkle appcast ------------------------------
-# Derive the download URL prefix from SUFeedURL (…/appcast.xml → …/).
+# --- figure out the repo + asset URLs ---------------------------------------
+# Owner/repo are parsed from SUFeedURL: raw.githubusercontent.com/<owner>/<repo>/…
 FEED="$(grep 'SUFeedURL:' project.yml | sed -E 's/.*"([^"]+)".*/\1/')"
-PREFIX="${FEED%appcast.xml}"
-SIGN="tools/sparkle/bin/sign_update"
-
 if [[ "$FEED" == *YOUR_GITHUB_USERNAME* ]]; then
-  echo "⚠︎  SUFeedURL still has the placeholder — run:"
-  echo "      ./scripts/finalize-updates.sh <github-username>"
-  echo "    then re-run this release. Skipping appcast for now."
-else
-  echo "▸ Signing DMG with EdDSA key…"
-  # sign_update prints:  sparkle:edSignature="…" length="…"
-  # (first run may prompt once for Keychain access — click Allow.)
-  SIG_OUT="$("$SIGN" "$DMG")"
-  ED_SIG="$(printf '%s' "$SIG_OUT" | sed -E 's/.*edSignature="([^"]+)".*/\1/')"
-  LENGTH="$(printf '%s' "$SIG_OUT" | sed -E 's/.*length="([0-9]+)".*/\1/')"
-  if [[ -z "$ED_SIG" || -z "$LENGTH" ]]; then
-    echo "✗ signing failed — got: $SIG_OUT"; exit 1
+  echo "✗ SUFeedURL still has the placeholder. Run first:"
+  echo "     ./scripts/finalize-updates.sh <github-username>"
+  exit 1
+fi
+GH_PATH="${FEED#https://raw.githubusercontent.com/}"
+OWNER="$(printf '%s' "$GH_PATH" | cut -d/ -f1)"
+REPO="$(printf '%s' "$GH_PATH" | cut -d/ -f2)"
+ASSET_URL="https://github.com/$OWNER/$REPO/releases/download/v$VERSION/ClipVault.dmg"
+
+# --- sign the DMG -----------------------------------------------------------
+echo "▸ Signing DMG with EdDSA key…"
+# (first run may prompt once for Keychain access — click Allow.)
+SIG_OUT="$(tools/sparkle/bin/sign_update "$DMG")"
+ED_SIG="$(printf '%s' "$SIG_OUT" | sed -E 's/.*edSignature="([^"]+)".*/\1/')"
+LENGTH="$(printf '%s' "$SIG_OUT" | sed -E 's/.*length="([0-9]+)".*/\1/')"
+[[ -n "$ED_SIG" && -n "$LENGTH" ]] || { echo "✗ signing failed — got: $SIG_OUT"; exit 1; }
+
+# --- publish the GitHub Release (uploads the DMG asset) ---------------------
+if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
+  echo "▸ Creating GitHub Release v$VERSION and uploading ClipVault.dmg…"
+  if gh release view "v$VERSION" >/dev/null 2>&1; then
+    gh release upload "v$VERSION" "$DMG" --clobber
+  else
+    gh release create "v$VERSION" "$DMG" \
+      --title "ClipVault $VERSION" \
+      --notes "ClipVault $VERSION — universal build for Apple Silicon & Intel (macOS 14+)."
   fi
-  echo "▸ Updating appcast.xml…"
-  python3 scripts/appcast.py \
-    website/downloads/appcast.xml \
-    "ClipVault" "$VERSION" "$NEXT_BUILD" "14.0" \
-    "${PREFIX}ClipVault-$VERSION.dmg" "$ED_SIG" "$LENGTH"
+else
+  echo "⚠︎  gh not logged in — skipping upload. Create the release manually:"
+  echo "     gh release create v$VERSION $DMG --title \"ClipVault $VERSION\""
+  echo "    (the appcast below already points at the expected asset URL)"
 fi
 
-# Stable copy the website's Download button always points at.
-cp "$DMG" "website/downloads/ClipVault-latest.dmg"
+# --- write the signed appcast (repo root, committed) ------------------------
+echo "▸ Updating appcast.xml…"
+python3 scripts/appcast.py \
+  appcast.xml "ClipVault" "$VERSION" "$NEXT_BUILD" "14.0" \
+  "$ASSET_URL" "$ED_SIG" "$LENGTH"
 
 SIZE="$(du -h "$DMG" | cut -f1 | tr -d ' ')"
 echo
 echo "✅ Released v$VERSION ($SIZE, $ARCHS)"
-echo "   • $DMG"
-echo "   • website/downloads/ClipVault-$VERSION.dmg   (Sparkle enclosure)"
-echo "   • website/downloads/ClipVault-latest.dmg     (website Download button)"
-echo "   • website/downloads/appcast.xml              (Sparkle update feed)"
+echo "   • GitHub Release asset:  $ASSET_URL"
+echo "   • appcast.xml (feed):    $FEED"
+echo "   • website Download btn:  https://github.com/$OWNER/$REPO/releases/latest/download/ClipVault.dmg"
 echo
-echo "Next:  git add -A && git commit -m \"Release v$VERSION\" && git push"
+echo "Next:  git add appcast.xml && git commit -m \"Release v$VERSION\" && git push"
 echo "       …then existing users get the update automatically via Sparkle."

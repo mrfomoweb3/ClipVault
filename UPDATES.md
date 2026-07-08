@@ -26,18 +26,19 @@ checks an **appcast** feed hosted in this repo and installs new versions itself.
    access key ed25519") — click **Always Allow** once.
 
 That's it. The feed lives at:
-`https://raw.githubusercontent.com/<you>/ClipVault/main/website/downloads/appcast.xml`
+`https://raw.githubusercontent.com/<you>/ClipVault/main/appcast.xml`
 
 ## Every future update
 
 ```bash
-./scripts/release.sh 1.0.3          # bump + build + sign + appcast
-git add -A && git commit -m "Release v1.0.3" && git push
+./scripts/release.sh 1.0.3          # bump + build + sign + upload release + appcast
+git add appcast.xml && git commit -m "Release v1.0.3" && git push
 ```
 
-Within a day (or immediately via **Settings → Check for Updates…**), existing users
-get an "Update Available" prompt and update themselves. Fresh downloads keep coming
-from the website's **Download** button (`ClipVault-latest.dmg`).
+`release.sh` builds + signs the DMG, **creates a GitHub Release `v1.0.3` and uploads
+`ClipVault.dmg` as an asset**, then writes the signed `appcast.xml`. Within a day (or
+immediately via **Settings → Check for Updates…**), existing users get an
+"Update Available" prompt and update themselves.
 
 ## How it fits together
 
@@ -45,18 +46,20 @@ from the website's **Download** button (`ClipVault-latest.dmg`).
 |-------|-------|---------|
 | `SUFeedURL`, `SUPublicEDKey` | `project.yml` → Info.plist | Tell the app where/how to verify updates |
 | Private EdDSA key | your macOS **Keychain** | Signs each DMG (never in the repo) |
-| `scripts/release.sh` | — | Bump → build → package → **sign** → appcast |
+| `scripts/release.sh` | — | Bump → build → sign → **`gh release` upload** → appcast |
 | `scripts/appcast.py` | — | Writes the signed `appcast.xml` entry |
-| `website/downloads/` | committed to repo | Hosts the DMGs + `appcast.xml` (served via raw.githubusercontent) |
+| **GitHub Release assets** | `…/releases/download/v1.0.3/ClipVault.dmg` | Hosts the DMGs (kept out of git) |
+| `appcast.xml` | repo root, committed (tiny) | The Sparkle update feed, served via raw.githubusercontent |
+
+The website's **Download** button points at the stable
+`…/releases/latest/download/ClipVault.dmg`, which always redirects to the newest release.
 
 ## Notes & options
 
 - **Gatekeeper warning still applies.** Sparkle secures the *update* channel, but the
   app is still ad-hoc signed, so first-launch shows the "unidentified developer"
   caution until you sign with an **Apple Developer ID** ($99/yr) and notarize.
-- **Repo size:** each release commits a ~1.4 MB DMG. To avoid slow growth you can
-  delete DMGs older than the last couple of releases — users only ever download the
-  newest enclosure. (Alternatively, host DMGs as GitHub Release assets instead of in
-  the repo; ask and I'll switch `release.sh` to `gh release upload`.)
+- **Repo stays small.** DMGs are GitHub Release assets, never committed — only the tiny
+  `appcast.xml` changes each release. (`*.dmg` is git-ignored.)
 - **Regenerating Sparkle tools:** they live in `tools/sparkle/bin`. If missing, re-run
   the download from the Sparkle GitHub releases page and extract into `tools/sparkle`.
