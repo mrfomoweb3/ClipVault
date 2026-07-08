@@ -42,6 +42,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updaterController.checkForUpdates(sender)
     }
 
+    // Self-managed Settings window. The SwiftUI `Settings` scene's
+    // `showSettingsWindow:` action is unreliable for an .accessory menu-bar app
+    // (and unreachable from the detached popover), so we own the window here.
+    private var settingsWindow: NSWindow?
+
+    /// Reachable via the responder chain from the popover's Settings button.
+    @objc func openSettingsWindow(_ sender: Any?) {
+        if settingsWindow == nil {
+            let host = NSHostingController(rootView: SettingsView().environment(viewModel))
+            let window = NSWindow(contentViewController: host)
+            window.title = "ClipVault Settings"
+            window.styleMask = [.titled, .closable]
+            window.isReleasedWhenClosed = false
+            window.center()
+            settingsWindow = window
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow?.makeKeyAndOrderFront(nil)
+        // Accessory (menu-bar) apps sometimes need this to surface a window
+        // above the frontmost app.
+        settingsWindow?.orderFrontRegardless()
+    }
+
     private var hasOnboarded: Bool {
         get { UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") }
         set { UserDefaults.standard.set(newValue, forKey: "hasCompletedOnboarding") }

@@ -117,7 +117,8 @@ struct PopoverView: View {
             shortcutHint("⎋", label: "Close")
             Spacer()
             Button("Settings") {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                onClose()
+                NSApp.sendAction(Selector(("openSettingsWindow:")), to: nil, from: nil)
             }
             .buttonStyle(.plain)
             .font(.cvBodyMedium(11))
