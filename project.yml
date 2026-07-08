@@ -46,8 +46,8 @@ targets:
         CFBundleName: ClipVault
         CFBundleDisplayName: ClipVault
         CFBundleIdentifier: com.clipvault.app
-        CFBundleVersion: "2"
-        CFBundleShortVersionString: "1.0.1"
+        CFBundleVersion: "3"
+        CFBundleShortVersionString: "1.0.2"
         NSPrincipalClass: NSApplication
         LSUIElement: true
         NSAccessibilityUsageDescription: "ClipVault needs Accessibility access to paste clipboard items into other apps."
@@ -55,8 +55,8 @@ targets:
         CFBundleIconFile: AppIcon
         ATSApplicationFontsPath: Fonts
         # --- Sparkle auto-updates ---
-        # NOTE: replace YOUR_GITHUB_USERNAME below (see scripts/finalize-updates.sh).
-        SUFeedURL: "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/ClipVault/main/appcast.xml"
+        # NOTE: replace mrfomoweb3 below (see scripts/finalize-updates.sh).
+        SUFeedURL: "https://raw.githubusercontent.com/mrfomoweb3/ClipVault/main/appcast.xml"
         SUPublicEDKey: "JVjPnXAv24JwAwDVUHF1JkvIDg/XSK89ZH6LW1gQ+u4="
         SUEnableAutomaticChecks: true
         SUScheduledCheckInterval: 86400
