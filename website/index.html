@@ -165,6 +165,7 @@
             Download for Mac
             <span class="arrow">↗</span>
           </a>
+          <p class="dl-count" id="dlCount"><span class="dl-dot"></span><strong>4</strong>&nbsp;downloads and counting</p>
           <p class="tiny">v1.0.3 · .dmg · ~1.4 MB</p>
         </div>
       </section>
@@ -203,5 +204,29 @@
 
     </div>
   </div>
+
+  <script>
+    // Live download count from GitHub Release assets (public API, no auth).
+    // Falls back to the baseline shown in the markup if the request fails.
+    (async () => {
+      const BASELINE = 4;
+      const el = document.getElementById('dlCount');
+      if (!el) return;
+      const strong = el.querySelector('strong');
+      try {
+        const res = await fetch(
+          'https://api.github.com/repos/mrfomoweb3/ClipVault/releases?per_page=100',
+          { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (!res.ok) return;
+        const releases = await res.json();
+        let count = 0;
+        for (const rel of releases)
+          for (const asset of rel.assets || [])
+            if (asset.name.endsWith('.dmg')) count += asset.download_count || 0;
+        strong.textContent = Math.max(count, BASELINE).toLocaleString();
+      } catch (_) { /* keep the baseline already in the markup */ }
+    })();
+  </script>
 </body>
 </html>
