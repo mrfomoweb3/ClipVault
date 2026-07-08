@@ -303,32 +303,16 @@ section { padding-left: clamp(20px, 4vw, 56px); padding-right: clamp(20px, 4vw, 
 .download-card .btn-lg { margin-top: 28px; }
 .tiny { font-size: 12.5px !important; color: #ffd9c2 !important; margin-top: 14px !important; }
 
-/* Subtle live download counter */
+/* Subtle live download counter — quiet text under the button */
 .dl-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 18px;
+  margin-top: 16px;
   font-size: 14px;
   font-weight: 500;
-  color: #fff;
-  background: rgba(255,255,255,.14);
-  border: 1.5px solid rgba(255,255,255,.35);
-  border-radius: 999px;
-  padding: 7px 16px;
+  letter-spacing: .2px;
+  color: #ffe;
+  opacity: .82;
 }
-.dl-count strong { font-weight: 700; }
-.dl-dot {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: #3ad16a;
-  box-shadow: 0 0 0 0 rgba(58,209,106,.7);
-  animation: dlpulse 2s infinite;
-}
-@keyframes dlpulse {
-  0%   { box-shadow: 0 0 0 0 rgba(58,209,106,.6); }
-  70%  { box-shadow: 0 0 0 8px rgba(58,209,106,0); }
-  100% { box-shadow: 0 0 0 0 rgba(58,209,106,0); }
-}
+.dl-count strong { font-weight: 700; opacity: 1; }
 
 /* ---- FAQ ---- */
 .faq { padding-top: clamp(64px, 9vw, 110px); }
