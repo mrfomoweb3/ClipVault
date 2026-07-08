@@ -35,7 +35,7 @@
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/ClipVault/main/appcast.xml</string>
+	<string>https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/ClipVault/main/website/downloads/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>JVjPnXAv24JwAwDVUHF1JkvIDg/XSK89ZH6LW1gQ+u4=</string>
 	<key>SUScheduledCheckInterval</key>
