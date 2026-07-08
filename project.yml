@@ -1,0 +1,77 @@
+name: ClipVault
+options:
+  bundleIdPrefix: com.clipvault
+  deploymentTarget:
+    macOS: "14.0"
+  defaultConfig: Debug
+  xcodeVersion: "15"
+  generateEmptyDirectories: true
+  groupSortPosition: none
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.9.4"
+
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    # Build a universal binary so the app runs natively on both
+    # Apple Silicon (arm64) and Intel (x86_64) Macs.
+    ARCHS: "$(ARCHS_STANDARD)"
+    ONLY_ACTIVE_ARCH: NO
+
+targets:
+  ClipVault:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: ClipVault
+        excludes:
+          - "**/*.md"
+    dependencies:
+      - package: Sparkle
+    resources:
+      - path: ClipVault/Assets.xcassets
+      - path: ClipVault/Fonts
+        type: folder
+    info:
+      path: ClipVault/Info.plist
+      properties:
+        CFBundleName: ClipVault
+        CFBundleDisplayName: ClipVault
+        CFBundleIdentifier: com.clipvault.app
+        CFBundleVersion: "2"
+        CFBundleShortVersionString: "1.0.1"
+        NSPrincipalClass: NSApplication
+        LSUIElement: true
+        NSAccessibilityUsageDescription: "ClipVault needs Accessibility access to paste clipboard items into other apps."
+        NSSystemExtensionUsageDescription: "ClipVault uses a global keyboard shortcut to open your clipboard history from anywhere."
+        CFBundleIconFile: AppIcon
+        ATSApplicationFontsPath: Fonts
+        # --- Sparkle auto-updates ---
+        # NOTE: replace YOUR_GITHUB_USERNAME below (see scripts/finalize-updates.sh).
+        SUFeedURL: "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/ClipVault/main/website/downloads/appcast.xml"
+        SUPublicEDKey: "JVjPnXAv24JwAwDVUHF1JkvIDg/XSK89ZH6LW1gQ+u4="
+        SUEnableAutomaticChecks: true
+        SUScheduledCheckInterval: 86400
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.clipvault.app
+        INFOPLIST_FILE: ClipVault/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    entitlements:
+      path: ClipVault/ClipVault.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.automation.apple-events: true
+        # Required so the ad-hoc-signed app can load Sparkle.framework, which
+        # is signed by a different team. (With a real Developer ID + notarization
+        # you re-sign the framework and can drop this.)
+        com.apple.security.cs.disable-library-validation: true
