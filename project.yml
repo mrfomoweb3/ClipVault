@@ -52,8 +52,8 @@ targets:
         CFBundleName: ClipVault
         CFBundleDisplayName: ClipVault
         CFBundleIdentifier: com.clipvault.app
-        CFBundleVersion: "4"
-        CFBundleShortVersionString: "1.0.3"
+        CFBundleVersion: "5"
+        CFBundleShortVersionString: "1.0.4"
         NSPrincipalClass: NSApplication
         LSUIElement: true
         NSAccessibilityUsageDescription: "ClipVault needs Accessibility access to paste clipboard items into other apps."
