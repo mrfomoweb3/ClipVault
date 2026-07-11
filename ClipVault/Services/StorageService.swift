@@ -9,8 +9,27 @@ final class StorageService {
 
     init() throws {
         let schema = Schema([ClipboardEntry.self])
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        container = try ModelContainer(for: schema, configurations: [config])
+
+        // Use an explicit, app-namespaced store URL. The SwiftData default is
+        // `~/Library/Application Support/default.store`, which — for a
+        // non-sandboxed app — is SHARED with every other non-sandboxed app that
+        // also uses the default name (e.g. iCloud Mail). That collision made
+        // ClipVault's store fail to open on some launches (notably at login),
+        // so capturing silently stopped after a restart. A dedicated path fixes it.
+        let dir = URL.applicationSupportDirectory.appending(path: "ClipVault", directoryHint: .isDirectory)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let storeURL = dir.appending(path: "ClipVault.store")
+
+        do {
+            let config = ModelConfiguration(schema: schema, url: storeURL)
+            container = try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            // Never brick the app over storage — fall back to in-memory so the
+            // clipboard still works this session (history just won't persist).
+            logger.error("On-disk store failed (\(error.localizedDescription)); using in-memory store")
+            let mem = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            container = try ModelContainer(for: schema, configurations: [mem])
+        }
     }
 
     var context: ModelContext { container.mainContext }

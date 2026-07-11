@@ -152,7 +152,11 @@ final class ClipboardViewModel {
             load()
         }
 
-        NotificationCenter.default.addObserver(
+        // NSWorkspace notifications post on ITS OWN center, not .default —
+        // observing the default center here meant this never fired, so the
+        // monitor was never re-armed after sleep/wake. Restart it on wake so
+        // clipboard capture keeps working across sleep and login sessions.
+        NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification,
             object: nil,
             queue: .main
