@@ -10,6 +10,7 @@ final class ClipboardViewModel {
     var entries: [ClipboardEntry] = []
     var searchText: String = ""
     var selectedID: UUID? = nil
+    var notes: [StickyNote] = []
 
     var filteredEntries: [ClipboardEntry] {
         guard !searchText.isEmpty else { return entries }
@@ -37,9 +38,35 @@ final class ClipboardViewModel {
     init(storage: StorageService) {
         self.storage = storage
         load()
+        loadNotes()
         startMonitor()
         scheduleCleanup()
         pasteService.requestAccessibilityIfNeeded()
+    }
+
+    // MARK: - Sticky notes
+
+    func loadNotes() {
+        notes = storage.fetchNotes()
+    }
+
+    @discardableResult
+    func createNote(text: String = "", color: NoteColor = .lemon, largeEditor: Bool = false) -> StickyNote {
+        let note = StickyNote(text: text, color: color, largeEditor: largeEditor)
+        storage.saveNote(note)
+        loadNotes()
+        return note
+    }
+
+    func updateNote(_ note: StickyNote) {
+        note.updatedAt = Date()
+        storage.saveChanges()
+        loadNotes()
+    }
+
+    func deleteNote(_ note: StickyNote) {
+        storage.deleteNote(note)
+        notes.removeAll { $0.id == note.id }
     }
 
     // MARK: - Load

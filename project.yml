@@ -42,6 +42,8 @@ targets:
           - "**/*.md"
     dependencies:
       - package: Sparkle
+      - target: ClipVaultWidgets
+        embed: true
     resources:
       - path: ClipVault/Assets.xcassets
       - path: ClipVault/Fonts
@@ -81,3 +83,32 @@ targets:
         # is signed by a different team. (With a real Developer ID + notarization
         # you re-sign the framework and can drop this.)
         com.apple.security.cs.disable-library-validation: true
+
+  ClipVaultWidgets:
+    type: app-extension
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: ClipVaultWidgets
+    info:
+      path: ClipVaultWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: ClipVault Widgets
+        CFBundleShortVersionString: "1.0.4"
+        CFBundleVersion: "5"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.clipvault.app.widgets
+        INFOPLIST_FILE: ClipVaultWidgets/Info.plist
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "ClipVault Self-Signed"
+        DEVELOPMENT_TEAM: ""
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+    entitlements:
+      path: ClipVaultWidgets/ClipVaultWidgets.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+    dependencies: []

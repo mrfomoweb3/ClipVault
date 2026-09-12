@@ -8,7 +8,7 @@ final class StorageService {
     let container: ModelContainer
 
     init() throws {
-        let schema = Schema([ClipboardEntry.self])
+        let schema = Schema([ClipboardEntry.self, StickyNote.self])
 
         // Use an explicit, app-namespaced store URL. The SwiftData default is
         // `~/Library/Application Support/default.store`, which — for a
@@ -109,5 +109,33 @@ final class StorageService {
         } catch {
             logger.error("Enforce limit failed: \(error.localizedDescription)")
         }
+    }
+
+    // MARK: - Sticky notes
+
+    func saveNote(_ note: StickyNote) {
+        context.insert(note)
+        saveChanges()
+    }
+
+    func saveChanges() {
+        do { try context.save() }
+        catch { logger.error("Save failed: \(error.localizedDescription)") }
+    }
+
+    func fetchNotes() -> [StickyNote] {
+        let descriptor = FetchDescriptor<StickyNote>(
+            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
+        )
+        do { return try context.fetch(descriptor) }
+        catch {
+            logger.error("Fetch notes failed: \(error.localizedDescription)")
+            return []
+        }
+    }
+
+    func deleteNote(_ note: StickyNote) {
+        context.delete(note)
+        saveChanges()
     }
 }

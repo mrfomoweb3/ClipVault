@@ -3,6 +3,11 @@ import SwiftUI
 struct PopoverView: View {
     @Bindable var vm: ClipboardViewModel
     let onClose: () -> Void
+    let onOpenNote: (StickyNote) -> Void
+    let onCreateNote: (NoteColor) -> Void
+    let onDeleteNote: (StickyNote) -> Void
+
+    @State private var section: Section = .clips
 
     // Live-tracked so the "grant access" banner disappears the moment the
     // user grants Accessibility — AXIsProcessTrusted() isn't observable, so
@@ -16,11 +21,16 @@ struct PopoverView: View {
             if !axTrusted {
                 accessibilityBanner
             }
-            searchArea
+            sectionPicker
             Rectangle().fill(Color.cvDivider).frame(height: 1)
-            ClipboardListView(vm: vm) { entry in
-                onClose()
-                Task { await vm.paste(entry) }
+            if section == .clips {
+                searchArea
+                ClipboardListView(vm: vm) { entry in
+                    onClose()
+                    Task { await vm.paste(entry) }
+                }
+            } else {
+                NotesGalleryView(vm: vm, onOpen: onOpenNote, onCreate: onCreateNote, onDelete: onDeleteNote)
             }
             Rectangle().fill(Color.cvDivider).frame(height: 1)
             footerBar
@@ -34,14 +44,21 @@ struct PopoverView: View {
             if now != axTrusted { axTrusted = now }
         }
         .focusable()
-        .onKeyPress(.downArrow)  { vm.selectNext();     return .handled }
-        .onKeyPress(.upArrow)    { vm.selectPrevious(); return .handled }
+        .onKeyPress(.downArrow)  { guard section == .clips else { return .ignored }; vm.selectNext(); return .handled }
+        .onKeyPress(.upArrow)    { guard section == .clips else { return .ignored }; vm.selectPrevious(); return .handled }
         .onKeyPress(.return) {
+            guard section == .clips else { return .ignored }
             let close = onClose
             Task { close(); await vm.pasteSelected() }
             return .handled
         }
         .onKeyPress(.escape) { onClose(); return .handled }
+    }
+
+    private enum Section: String, CaseIterable, Identifiable {
+        case clips = "Clips"
+        case notes = "Notes"
+        var id: String { rawValue }
     }
 
     // MARK: - Accessibility banner
@@ -87,7 +104,7 @@ struct PopoverView: View {
                 .font(.cvDisplay(19))
                 .foregroundStyle(Color.cvText)
             Spacer()
-            Text("\(vm.filteredEntries.count)")
+            Text("\(section == .clips ? vm.filteredEntries.count : vm.notes.count)")
                 .font(.cvBodyBold(11))
                 .foregroundStyle(Color.cvText)
                 .padding(.horizontal, 9)
@@ -108,12 +125,38 @@ struct PopoverView: View {
             .padding(.bottom, 8)
     }
 
+    private var sectionPicker: some View {
+        HStack(spacing: 4) {
+            ForEach(Section.allCases) { item in
+                Button { section = item } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: item == .clips ? "doc.on.clipboard" : "note.text")
+                        Text(item.rawValue)
+                    }
+                    .font(.cvBodySemibold(11))
+                    .foregroundStyle(section == item ? Color.white : Color.cvTextSecond)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 28)
+                    .background(section == item ? Color.cvPurple : .clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }.buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(Color.cvHover)
+        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
+    }
+
     // MARK: - Footer
 
     private var footerBar: some View {
         HStack(spacing: 14) {
-            shortcutHint("↑↓", label: "Navigate")
-            shortcutHint("↩", label: "Paste")
+            if section == .clips {
+                shortcutHint("↑↓", label: "Navigate")
+                shortcutHint("↩", label: "Paste")
+            }
             shortcutHint("⎋", label: "Close")
             Spacer()
             Button("Settings") {
