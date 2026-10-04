@@ -81,6 +81,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // If launched from the DMG, offer to move into /Applications first —
+        // otherwise the app disappears when the DMG is ejected/deleted.
+        if InstallLocationService.moveToApplicationsIfNeeded() { return }
+
         registerBundledFonts()
 
         do {
