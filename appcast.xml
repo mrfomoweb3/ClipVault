@@ -3,6 +3,14 @@
   <channel>
     <title>ClipVault</title>
     <item>
+      <title>1.0.5</title>
+      <pubDate>Sun, 04 Oct 2026 08:02:59 +0000</pubDate>
+      <sparkle:version>6</sparkle:version>
+      <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure url="https://github.com/mrfomoweb3/ClipVault/releases/download/v1.0.5/ClipVault.dmg" type="application/octet-stream" length="2883037" sparkle:edSignature="8iUZfelKPT2maK5TPFTlagStFPr3rVQ5UtGeHkbCwC02zXgWZB52tv80PIrXh5r6iMgg3BSwTGx9PFJnw23/DQ==" />
+    </item>
+    <item>
       <title>1.0.4</title>
       <pubDate>Sat, 11 Jul 2026 08:05:12 +0000</pubDate>
       <sparkle:version>5</sparkle:version>
